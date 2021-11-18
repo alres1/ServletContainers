@@ -1,54 +1,69 @@
 package ru.netology.servlet;
 
 import ru.netology.controller.PostController;
+import ru.netology.handler.Handler;
 import ru.netology.repository.PostRepository;
+import ru.netology.repository.PostRepositoryClass;
 import ru.netology.service.PostService;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainServlet extends HttpServlet {
-  private PostController controller;
+    private PostController controller;
+    private final Map<String, Map<String, Handler>> handlers = new HashMap<>();
+    private static final String PATH = "/api/posts";
+    private static final String PATH_WITH_PARAMS = "/api/posts/";
 
-  @Override
-  public void init() {
-    final var repository = new PostRepository();
-    final var service = new PostService(repository);
-    controller = new PostController(service);
-  }
+    @Override
+    public void init() {
+        final PostRepository repository = new PostRepositoryClass();
+        final PostService service = new PostService(repository);
+        controller = new PostController(service);
 
-  @Override
-  protected void service(HttpServletRequest req, HttpServletResponse resp) {
-    // если деплоились в root context, то достаточно этого
-    try {
-      final var path = req.getRequestURI();
-      final var method = req.getMethod();
-      // primitive routing
-      if (method.equals("GET") && path.equals("/api/posts")) {
-        controller.all(resp);
-        return;
-      }
-      if (method.equals("GET") && path.matches("/api/posts/\\d+")) {
-        // easy way
-        final var id = Long.parseLong(path.substring(path.lastIndexOf("/")));
-        controller.getById(id, resp);
-        return;
-      }
-      if (method.equals("POST") && path.equals("/api/posts")) {
-        controller.save(req.getReader(), resp);
-        return;
-      }
-      if (method.equals("DELETE") && path.matches("/api/posts/\\d+")) {
-        // easy way
-        final var id = Long.parseLong(path.substring(path.lastIndexOf("/")));
-        controller.removeById(id, resp);
-        return;
-      }
-      resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    } catch (Exception e) {
-      e.printStackTrace();
-      resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        addHandler("GET", PATH, (path, request, response) -> controller.all(response));
+        addHandler("GET", PATH_WITH_PARAMS, (path, request, response) -> controller.getById(getIdByParsePath(path), response));
+        addHandler("POST", PATH, (path, request, response) -> controller.save(request.getReader(), response));
+        addHandler("DELETE", PATH_WITH_PARAMS, (path, request, response) -> controller.removeById(getIdByParsePath(path), response));
     }
-  }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) {
+
+        try {
+            final String method = request.getMethod();
+            String path = request.getRequestURI();
+
+            String pathHandler = path;
+            if (path.startsWith(PATH_WITH_PARAMS) && path.matches(PATH_WITH_PARAMS + "\\d+")) {
+                pathHandler = PATH_WITH_PARAMS;
+            } else if (path.startsWith(PATH)) {
+                pathHandler = PATH;
+            }
+
+            Handler handler = handlers.get(method).get(pathHandler);
+            handler.handle(path, request, response);
+
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void addHandler(String method, String path, Handler handler) {
+        Map<String, Handler> map = new HashMap<>();
+        if (handlers.containsKey(method)) {
+            map = handlers.get(method);
+        }
+        map.put(path, handler);
+        handlers.put(method, map);
+    }
+
+    private long getIdByParsePath(String path) {
+        return Long.parseLong(path.substring(path.lastIndexOf("/") + 1));
+    }
 }

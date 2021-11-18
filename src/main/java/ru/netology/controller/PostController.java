@@ -9,33 +9,36 @@ import java.io.IOException;
 import java.io.Reader;
 
 public class PostController {
-  public static final String APPLICATION_JSON = "application/json";
-  private final PostService service;
+    public static final String APPLICATION_JSON = "application/json";
+    private final PostService service;
+    private final Gson gson = new Gson();
 
-  public PostController(PostService service) {
-    this.service = service;
-  }
+    public PostController(PostService service) {
+        this.service = service;
+    }
 
-  public void all(HttpServletResponse response) throws IOException {
-    response.setContentType(APPLICATION_JSON);
-    final var data = service.all();
-    final var gson = new Gson();
-    response.getWriter().print(gson.toJson(data));
-  }
+    private <T> void deserReqSerResp(HttpServletResponse response, T data) throws IOException {
+        response.setContentType(APPLICATION_JSON);
+        String toJson = gson.toJson(data);
+        response.getWriter().print(toJson);
+    }
 
-  public void getById(long id, HttpServletResponse response) {
-    // TODO: deserialize request & serialize response
-  }
+    public void all(HttpServletResponse response) throws IOException {
+        deserReqSerResp(response, service.all());
+    }
 
-  public void save(Reader body, HttpServletResponse response) throws IOException {
-    response.setContentType(APPLICATION_JSON);
-    final var gson = new Gson();
-    final var post = gson.fromJson(body, Post.class);
-    final var data = service.save(post);
-    response.getWriter().print(gson.toJson(data));
-  }
+    public void getById(long id, HttpServletResponse response) throws IOException {
+        deserReqSerResp(response, service.getById(id));
+    }
 
-  public void removeById(long id, HttpServletResponse response) {
-    // TODO: deserialize request & serialize response
-  }
+    public void save(Reader body, HttpServletResponse response) throws IOException {
+        final Post post = gson.fromJson(body, Post.class);
+        deserReqSerResp(response, service.save(post));
+    }
+
+    public void removeById(long id, HttpServletResponse response) throws IOException {
+        service.removeById(id);
+        deserReqSerResp(response, "post id:" + id + " removed successfully");
+    }
+
 }
