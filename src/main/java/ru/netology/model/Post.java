@@ -1,25 +1,27 @@
 package ru.netology.model;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Post {
-    private long id;
+    //private long id;
+    private AtomicLong id = new AtomicLong();
     private String content;
 
     public Post() {
     }
 
-    public Post(long id, String content) {
+    public Post(AtomicLong id, String content) {
         this.id = id;
         this.content = content;
     }
 
     public long getId() {
-        return id;
+        return id.get();
     }
 
     public void setId(long id) {
-        this.id = id;
+        this.id.getAndAdd(id);
     }
 
     @Override

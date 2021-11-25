@@ -17,28 +17,28 @@ public class PostController {
         this.service = service;
     }
 
-    private <T> void deserReqSerResp(HttpServletResponse response, T data) throws IOException {
+    private <T> void deserializeRequestSerializeResponse(HttpServletResponse response, T data) throws IOException {
         response.setContentType(APPLICATION_JSON);
         String toJson = gson.toJson(data);
         response.getWriter().print(toJson);
     }
 
     public void all(HttpServletResponse response) throws IOException {
-        deserReqSerResp(response, service.all());
+        deserializeRequestSerializeResponse(response, service.all());
     }
 
     public void getById(long id, HttpServletResponse response) throws IOException {
-        deserReqSerResp(response, service.getById(id));
+        deserializeRequestSerializeResponse(response, service.getById(id));
     }
 
     public void save(Reader body, HttpServletResponse response) throws IOException {
         final Post post = gson.fromJson(body, Post.class);
-        deserReqSerResp(response, service.save(post));
+        deserializeRequestSerializeResponse(response, service.save(post));
     }
 
     public void removeById(long id, HttpServletResponse response) throws IOException {
         service.removeById(id);
-        deserReqSerResp(response, "post id:" + id + " removed successfully");
+        deserializeRequestSerializeResponse(response, "post id:" + id + " removed successfully");
     }
 
 }
