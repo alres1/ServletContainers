@@ -88,7 +88,9 @@ public class MainServlet extends HttpServlet {
 
             Handler handler = handlers.get(method).get(pathHandler);
             handler.handle(path, request, response);
-
+            if (handler == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
