@@ -9,8 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class PostRepositoryClass implements PostRepository {
 
-    //private final List<Post> posts = Collections.synchronizedList(new ArrayList<>());
-    //private long count = 1;
     private final ConcurrentHashMap<Long, Post> posts = new ConcurrentHashMap<>();
     private AtomicLong count = new AtomicLong(0);
 

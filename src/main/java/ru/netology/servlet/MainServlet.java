@@ -1,18 +1,16 @@
 package ru.netology.servlet;
 
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import ru.netology.config.JavaConfig;
 import ru.netology.controller.PostController;
 import ru.netology.exception.NotFoundException;
 import ru.netology.handler.Handler;
-import ru.netology.repository.PostRepository;
-import ru.netology.repository.PostRepositoryClass;
-import ru.netology.service.PostService;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class MainServlet extends HttpServlet {
     private PostController controller;
@@ -22,14 +20,11 @@ public class MainServlet extends HttpServlet {
 
     @Override
     public void init() {
-        final PostRepository repository = new PostRepositoryClass();
-        final PostService service = new PostService(repository);
-        controller = new PostController(service);
+//        final PostRepository repository = new PostRepositoryClass();
+//        final PostService service = new PostService(repository);
+        final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(JavaConfig.class);
+        controller = context.getBean(PostController.class);
 
-//        addHandler("GET", PATH, (path, request, response) -> controller.all(response));
-//        addHandler("GET", PATH_WITH_PARAMS, (path, request, response) -> controller.getById(getIdByParsePath(path), response));
-//        addHandler("POST", PATH, (path, request, response) -> controller.save(request.getReader(), response));
-//        addHandler("DELETE", PATH_WITH_PARAMS, (path, request, response) -> controller.removeById(getIdByParsePath(path), response));
         addHandler("GET", PATH, (path, request, response) -> {
             try {
                 controller.all(response);
